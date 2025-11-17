@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#eef2f7" />
+  <title>Bird Feed Chase</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div id="ui">
+    <h1>Bird Feed Chase</h1>
+    <div class="controls">
+      <label for="species">Choose your bird:</label>
+      <select id="species">
+        <option value="hawk">Hawk</option>
+        <option value="dove">Dove</option>
+        <option value="sparrow">Sparrow</option>
+        <option value="chickadee">Chickadee</option>
+      </select>
+      <label for="seeds">Seeds:</label>
+      <select id="seeds">
+        <option value="50">50 Seeds</option>
+        <option value="100" selected>100 Seeds</option>
+        <option value="200">200 Seeds</option>
+        <option value="500">500 Seeds</option>
+      </select>
+      <button id="startBtn">Start Game</button>
+      <button id="restartBtn">Restart</button>
+    </div>
+    <p class="hint" id="hint">Use arrow keys or WASD to move your bird.</p>
+  </div>
+  
+  <!-- HUD during game (top center) -->
+  <div id="gameHUD" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:6px; font-weight:600; font-size:16px; text-align:center; white-space:nowrap;">
+    <div id="score">Score: 0</div>
+    <div style="display:flex; gap:16px; justify-content:center; font-size:14px; margin-top:4px;">
+      <span id="birds">Birds: 0</span>
+      <span id="seedsRemaining">Seeds: 0</span>
+    </div>
+  </div>
+  
+  <canvas id="game"></canvas>
+  
+  <!-- Mobile touch controls -->
+  <div id="mobileControls" style="display:none;">
+    <button id="upBtn" class="touchBtn" style="top:10px;left:50%;transform:translateX(-50%)">↑</button>
+    <button id="downBtn" class="touchBtn" style="bottom:10px;left:50%;transform:translateX(-50%)">↓</button>
+    <button id="leftBtn" class="touchBtn" style="top:50%;left:10px;transform:translateY(-50%)">←</button>
+    <button id="rightBtn" class="touchBtn" style="top:50%;right:10px;transform:translateY(-50%)">→</button>
+  </div>
+  
+  <script type="module" src="index.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64">
+  <!-- Dove sprite sheet: 4 frames of wing animation -->
+  
+  <!-- Frame 0: Wings neutral -->
+  <g transform="translate(0, 0)">
+    <ellipse cx="32" cy="32" rx="15" ry="16" fill="#B0C4DE"/>
+    <circle cx="32" cy="18" r="8" fill="#c8d8f0"/>
+    <circle cx="36" cy="16" r="2" fill="#333"/>
+    <polygon points="40,16 48,14 40,18" fill="#f2d3a7"/>
+  </g>
+  
+  <!-- Frame 1: Wings up -->
+  <g transform="translate(64, 0)">
+    <ellipse cx="32" cy="32" rx="15" ry="16" fill="#B0C4DE"/>
+    <circle cx="32" cy="18" r="8" fill="#c8d8f0"/>
+    <circle cx="36" cy="16" r="2" fill="#333"/>
+    <polygon points="40,16 48,14 40,18" fill="#f2d3a7"/>
+    <path d="M 19 26 Q 6 12 4 22" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 45 26 Q 58 12 60 22" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Frame 2: Wings mid -->
+  <g transform="translate(128, 0)">
+    <ellipse cx="32" cy="32" rx="15" ry="16" fill="#B0C4DE"/>
+    <circle cx="32" cy="18" r="8" fill="#c8d8f0"/>
+    <circle cx="36" cy="16" r="2" fill="#333"/>
+    <polygon points="40,16 48,14 40,18" fill="#f2d3a7"/>
+    <path d="M 19 28 Q 8 16 6 26" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 45 28 Q 56 16 58 26" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Frame 3: Wings down -->
+  <g transform="translate(192, 0)">
+    <ellipse cx="32" cy="32" rx="15" ry="16" fill="#B0C4DE"/>
+    <circle cx="32" cy="18" r="8" fill="#c8d8f0"/>
+    <circle cx="36" cy="16" r="2" fill="#333"/>
+    <polygon points="40,16 48,14 40,18" fill="#f2d3a7"/>
+    <path d="M 19 36 Q 10 28 8 36" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 45 36 Q 54 28 56 36" stroke="#9ab0ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,34 @@
+{
+  "name": "Bird Feed Chase",
+  "displayName": "Bird Feed Chase",
+  "expo": {
+    "name": "Bird Feed Chase",
+    "slug": "birdgame",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.example.birdgame",
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow access to photos"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c55cab48-0e9d-42a2-b4ec-ec975edaebae"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Bird Feed Chase",
+  "short_name": "Birds",
+  "description": "A simple bird feeder chase game",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#87CEEB",
+  "icons": [
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

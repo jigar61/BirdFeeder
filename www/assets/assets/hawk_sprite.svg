@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64">
+  <!-- Hawk sprite sheet: 4 frames of wing animation -->
+  <!-- Each frame is 64x64, positioned at x: 0, 64, 128, 192 -->
+  
+  <!-- Frame 0: Wings neutral -->
+  <g transform="translate(0, 0)">
+    <ellipse cx="32" cy="32" rx="14" ry="18" fill="#8B0000"/>
+    <circle cx="32" cy="16" r="8" fill="#7a1f1f"/>
+    <circle cx="36" cy="14" r="2.5" fill="#ffd700"/>
+    <polygon points="40,14 48,12 40,16" fill="#f4c542"/>
+  </g>
+  
+  <!-- Frame 1: Wings up -->
+  <g transform="translate(64, 0)">
+    <ellipse cx="32" cy="32" rx="14" ry="18" fill="#8B0000"/>
+    <circle cx="32" cy="16" r="8" fill="#7a1f1f"/>
+    <circle cx="36" cy="14" r="2.5" fill="#ffd700"/>
+    <polygon points="40,14 48,12 40,16" fill="#f4c542"/>
+    <path d="M 20 26 Q 8 12 6 20" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 44 26 Q 56 12 58 20" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Frame 2: Wings mid -->
+  <g transform="translate(128, 0)">
+    <ellipse cx="32" cy="32" rx="14" ry="18" fill="#8B0000"/>
+    <circle cx="32" cy="16" r="8" fill="#7a1f1f"/>
+    <circle cx="36" cy="14" r="2.5" fill="#ffd700"/>
+    <polygon points="40,14 48,12 40,16" fill="#f4c542"/>
+    <path d="M 20 28 Q 10 18 8 26" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 44 28 Q 54 18 56 26" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Frame 3: Wings down -->
+  <g transform="translate(192, 0)">
+    <ellipse cx="32" cy="32" rx="14" ry="18" fill="#8B0000"/>
+    <circle cx="32" cy="16" r="8" fill="#7a1f1f"/>
+    <circle cx="36" cy="14" r="2.5" fill="#ffd700"/>
+    <polygon points="40,14 48,12 40,16" fill="#f4c542"/>
+    <path d="M 20 36 Q 12 28 10 36" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 44 36 Q 52 28 54 36" stroke="#6a1010" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

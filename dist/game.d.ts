@@ -1,0 +1,34 @@
+export declare class Game {
+    private canvas;
+    private ctx;
+    private W;
+    private H;
+    private lastTime;
+    private lastSpawn;
+    private lastSquirrelSpawn;
+    private lastCatSpawn;
+    private feederImg;
+    private assetsLoaded;
+    private gameState;
+    private feederX;
+    private feederY;
+    private configuredSeeds;
+    private keys;
+    private selectedBird;
+    private touchStartX;
+    private touchStartY;
+    private mouseDownX;
+    private mouseDownY;
+    constructor(canvasId: string);
+    private setupEventListeners;
+    private handleResize;
+    startGame(): void;
+    stopGame(): void;
+    private spawnInitial;
+    private spawnBird;
+    private randomType;
+    resetGame(pause?: boolean): void;
+    private gameLoop;
+    private render;
+    private updateScore;
+}
