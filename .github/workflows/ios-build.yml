@@ -65,7 +65,7 @@ jobs:
             -exportPath build/ipa
 
       - name: Upload IPA as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: birdgame-ios
           path: ios/App/build/ipa/*.ipa
