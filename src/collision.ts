@@ -18,6 +18,19 @@ export class CollisionSystem {
           let eater: Bird | null = null;
           let eaten: Bird | null = null;
 
+          // Same species can never capture each other
+          if (a.type === b.type) {
+            // Just push apart, no eating
+            if (Math.random() < 0.5) {
+              b.vx += (b.x - a.x) * 0.05;
+              b.vy += (b.y - a.y) * 0.05;
+            } else {
+              a.vx += (a.x - b.x) * 0.05;
+              a.vy += (a.y - b.y) * 0.05;
+            }
+            continue;
+          }
+
           // Seed-eating birds can't eat each other
           const seedEaters = ['chickadee', 'dove', 'sparrow', 'squirrel'];
           if (seedEaters.includes(a.type) && seedEaters.includes(b.type)) {
@@ -32,7 +45,7 @@ export class CollisionSystem {
             eater = b;
             eaten = a;
           }
-          // Crows hunt all hawks
+          // Crows hunt hawks
           else if (a.type === 'crow' && b.type === 'hawk') {
             eater = a;
             eaten = b;
@@ -47,23 +60,6 @@ export class CollisionSystem {
           } else if (b.type === 'cat' && a.type !== 'cat' && a.type !== 'squirrel') {
             eater = b;
             eaten = a;
-          }
-          // Same-species interactions: chase away (no eating)
-          else if (
-            (a.type === 'chickadee' && b.type === 'chickadee') ||
-            (a.type === 'dove' && b.type === 'dove') ||
-            (a.type === 'sparrow' && b.type === 'sparrow') ||
-            (a.type === 'squirrel' && b.type === 'squirrel') ||
-            (a.type === 'cat' && b.type === 'cat')
-          ) {
-            if (Math.random() < 0.5) {
-              b.vx += (b.x - a.x) * 0.05;
-              b.vy += (b.y - a.y) * 0.05;
-            } else {
-              a.vx += (a.x - b.x) * 0.05;
-              a.vy += (a.y - b.y) * 0.05;
-            }
-            continue;
           }
           // Default: larger bird wins by size or chance
           else if (a.radius > b.radius + 2) {

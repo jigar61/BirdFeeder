@@ -7,6 +7,8 @@ export declare class Game {
     private lastSpawn;
     private lastSquirrelSpawn;
     private lastCatSpawn;
+    private lastSnakeSpawn;
+    private lastRatSpawn;
     private feederImg;
     private assetsLoaded;
     private gameState;
@@ -19,6 +21,7 @@ export declare class Game {
     private touchStartY;
     private mouseDownX;
     private mouseDownY;
+    private configuredDifficulty;
     constructor(canvasId: string);
     private setupEventListeners;
     private handleResize;
@@ -26,6 +29,9 @@ export declare class Game {
     stopGame(): void;
     private spawnInitial;
     private spawnBird;
+    private spawnSnake;
+    private spawnRat;
+    private updateEnvironmentalEnemies;
     private randomType;
     resetGame(pause?: boolean): void;
     private gameLoop;

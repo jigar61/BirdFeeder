@@ -1,4 +1,4 @@
-import { SpeciesInfo, SpeciesType } from './types';
+import { SpeciesInfo, SpeciesType, DifficultyLevel, DifficultyConfig } from './types';
 
 export const SPECIES_INFO: Record<SpeciesType, SpeciesInfo> = {
   hawk: { color: '#8B0000', radius: 14, speed: 1.6, aggression: 1.0 },
@@ -32,3 +32,35 @@ export function getMaxSeedsForType(type: SpeciesType): number {
 
 // Global multiplier to scale all movement/acceleration so we can tune overall pace
 export const GLOBAL_SPEED_SCALE = 0.6;
+
+// Difficulty configurations
+export const DIFFICULTY_CONFIG: Record<DifficultyLevel, DifficultyConfig> = {
+  easy: {
+    predatorSpawnMultiplier: 0.5,
+    speedMultiplier: 0.8,
+    initialPredators: 2,
+    description: 'Fewer and slower predators'
+  },
+  normal: {
+    predatorSpawnMultiplier: 1.0,
+    speedMultiplier: 1.0,
+    initialPredators: 4,
+    description: 'Balanced difficulty'
+  },
+  hard: {
+    predatorSpawnMultiplier: 1.5,
+    speedMultiplier: 1.2,
+    initialPredators: 6,
+    description: 'More predators, faster speeds'
+  },
+  nightmare: {
+    predatorSpawnMultiplier: 2.0,
+    speedMultiplier: 1.5,
+    initialPredators: 8,
+    description: 'Swarms of fast predators!'
+  }
+};
+
+export function getDifficultyConfig(difficulty: DifficultyLevel): DifficultyConfig {
+  return DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.normal;
+}

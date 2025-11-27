@@ -28,6 +28,13 @@
         <option value="200">200 Seeds</option>
         <option value="500">500 Seeds</option>
       </select>
+      <label for="difficulty">Difficulty:</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard</option>
+        <option value="nightmare">Nightmare</option>
+      </select>
       <button id="startBtn">Start Game</button>
       <button id="restartBtn">Restart</button>
     </div>
@@ -37,6 +44,7 @@
   <!-- HUD during game (top center) -->
   <div id="gameHUD" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:6px; font-weight:600; font-size:16px; text-align:center; white-space:nowrap;">
     <div id="score">Score: 0</div>
+    <div id="level" style="font-size:13px; color:#FFD700; margin-top:3px;">Level 1: Garden Meadow</div>
     <div style="display:flex; gap:16px; justify-content:center; font-size:14px; margin-top:4px;">
       <span id="birds">Birds: 0</span>
       <span id="seedsRemaining">Seeds: 0</span>

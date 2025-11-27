@@ -1,8 +1,9 @@
 import { Bird } from './bird.js';
 import { Renderer } from './renderer.js';
 import { CollisionSystem } from './collision.js';
-import { SPECIES_INFO, SPRITE_FRAMES, GLOBAL_SPEED_SCALE, getMaxSeedsForType } from './config.js';
-import { GameState, Seed, SpeciesType } from './types.js';
+import { SPECIES_INFO, SPRITE_FRAMES, GLOBAL_SPEED_SCALE, getMaxSeedsForType, getDifficultyConfig } from './config.js';
+import { GameState, Seed, SpeciesType, DifficultyLevel, EnvironmentalCreature } from './types.js';
+import { getLevelConfig, getNextLevelThreshold } from './levels.js';
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -13,6 +14,8 @@ export class Game {
   private lastSpawn: number = 0;
   private lastSquirrelSpawn: number = 0;
   private lastCatSpawn: number = 0;
+  private lastSnakeSpawn: number = 0;
+  private lastRatSpawn: number = 0;
   private feederImg: HTMLImageElement | null = null;
   private assetsLoaded: boolean = false;
   private gameState: GameState;
@@ -25,6 +28,7 @@ export class Game {
   private touchStartY: number = 0;
   private mouseDownX: number = 0;
   private mouseDownY: number = 0;
+  private configuredDifficulty: DifficultyLevel = 'normal';
 
   constructor(canvasId: string) {
     const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -44,7 +48,10 @@ export class Game {
       score: 0,
       running: false,
       totalSeeds: this.configuredSeeds,
-      crowSpawned: false
+      crowSpawned: false,
+      currentLevel: 1,
+      levelStartScore: 0,
+      environmentalEnemies: []
     };
 
     // Preload feeder image
@@ -267,6 +274,8 @@ export class Game {
     this.gameState.seeds = [];
     this.gameState.totalSeeds = this.configuredSeeds;
 
+    const diffConfig = getDifficultyConfig(this.configuredDifficulty);
+
     // Spawn regular birds
     for (let i = 0; i < 8; i++) {
       let x, y;
@@ -287,8 +296,9 @@ export class Game {
       this.spawnBird(this.randomType(), x, y);
     }
 
-    // Spawn initial crows
-    for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
+    // Spawn initial crows (scaled by difficulty)
+    const crowCount = Math.floor((2 + Math.floor(Math.random() * 2)) * diffConfig.predatorSpawnMultiplier);
+    for (let i = 0; i < crowCount; i++) {
       let x, y;
       const edge = Math.random() * 4;
       if (edge < 1) {
@@ -314,8 +324,9 @@ export class Game {
       this.spawnBird('squirrel', x, y);
     }
 
-    // Spawn cats
-    for (let i = 0; i < 1 + Math.floor(Math.random() * 2); i++) {
+    // Spawn cats (scaled by difficulty)
+    const catCount = Math.floor((1 + Math.floor(Math.random() * 2)) * diffConfig.predatorSpawnMultiplier);
+    for (let i = 0; i < catCount; i++) {
       let x, y;
       const edge = Math.random() * 4;
       if (edge < 1) {
@@ -359,6 +370,121 @@ export class Game {
     return bird;
   }
 
+  private spawnSnake(x: number, y: number): EnvironmentalCreature {
+    const vx = (Math.random() - 0.5) * 2;
+    const vy = 0; // Snakes stay on ground, no vertical movement
+    const speed = 0.5 + Math.random() * 0.5;
+    const snake: EnvironmentalCreature = {
+      type: 'snake',
+      x,
+      y,
+      vx,
+      vy,
+      alive: true,
+      radius: 20,
+      speed
+    };
+    this.gameState.environmentalEnemies.push(snake);
+    return snake;
+  }
+
+  private spawnRat(x: number, y: number): EnvironmentalCreature {
+    const vx = (Math.random() - 0.5) * 3;
+    const vy = 0; // Rats stay on ground, no vertical movement
+    const speed = 1 + Math.random() * 0.8;
+    const rat: EnvironmentalCreature = {
+      type: 'rat',
+      x,
+      y,
+      vx,
+      vy,
+      alive: true,
+      radius: 18,
+      speed,
+      health: 3
+    };
+    this.gameState.environmentalEnemies.push(rat);
+    return rat;
+  }
+
+  private updateEnvironmentalEnemies(scaledDt: number) {
+    const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+
+    // Update existing creatures
+    for (const creature of this.gameState.environmentalEnemies) {
+      if (!creature.alive) continue;
+
+      creature.x += creature.vx * creature.speed * scaledDt;
+      creature.y += creature.vy * creature.speed * scaledDt;
+
+      // Wrap around edges with some margin
+      const margin = 100;
+      if (creature.x < -margin) creature.x = this.W + margin;
+      if (creature.x > this.W + margin) creature.x = -margin;
+      if (creature.y < -margin) creature.y = this.H + margin;
+      if (creature.y > this.H + margin) creature.y = -margin;
+
+      // Check collisions with birds - environmental creatures can damage birds
+      for (const bird of this.gameState.birds) {
+        if (!bird.alive) continue;
+        const d = Math.hypot(bird.x - creature.x, bird.y - creature.y);
+        if (d < bird.radius + creature.radius) {
+          if (creature.type === 'rat') {
+            // Hawks and crows can eat rats
+            if (bird.type === 'hawk' || bird.type === 'crow') {
+              creature.alive = false;
+              this.gameState.score++;
+              this.updateScore();
+              if (bird.type === 'hawk') {
+                bird.killCount++;
+              }
+            }
+            // Rats damage the player if they're not a predator
+            else if (bird.isPlayer) {
+              this.gameState.running = false;
+              const btn = document.getElementById('startBtn');
+              if (btn) btn.innerText = 'Start Game';
+              alert('You were caught by a rat! Score: ' + this.gameState.score);
+            }
+          } else if (creature.type === 'snake') {
+            // Snakes damage the player
+            if (bird.isPlayer) {
+              this.gameState.running = false;
+              const btn = document.getElementById('startBtn');
+              if (btn) btn.innerText = 'Start Game';
+              alert('You were caught by a snake! Score: ' + this.gameState.score);
+            }
+          }
+        }
+      }
+    }
+
+    // Spawn snakes based on level config
+    const snakeCount = this.gameState.environmentalEnemies.filter(c => c.type === 'snake' && c.alive).length;
+    if (snakeCount < levelConfig.maxSnakes) {
+      if (performance.now() - this.lastSnakeSpawn > 1000 / levelConfig.snakeSpawnRate) {
+        const x = Math.random() * this.W;
+        const y = this.H * 0.70 + Math.random() * (this.H * 0.25); // Lower grass area
+        this.spawnSnake(x, y);
+        this.lastSnakeSpawn = performance.now();
+      }
+    }
+
+    // Spawn rats based on level config
+    const ratCount = this.gameState.environmentalEnemies.filter(c => c.type === 'rat' && c.alive).length;
+    if (ratCount < levelConfig.maxRats) {
+      if (performance.now() - this.lastRatSpawn > 1000 / levelConfig.ratSpawnRate) {
+        const x = -50 + Math.random() * (this.W + 100);
+        const y = this.H * 0.65 + Math.random() * (this.H * 0.35 - 50); // Grass area only
+        this.spawnRat(x, y);
+        this.lastRatSpawn = performance.now();
+      }
+    }
+
+    // Remove dead creatures
+    this.gameState.environmentalEnemies = this.gameState.environmentalEnemies.filter(c => c.alive);
+  }
+
   private randomType(): SpeciesType {
     const list: SpeciesType[] = ['hawk', 'dove', 'sparrow', 'chickadee'];
     const r = Math.random();
@@ -382,6 +508,11 @@ export class Game {
       this.configuredSeeds = parseInt(seedsSelect.value);
     } else if (seedsSelect) {
       this.configuredSeeds = parseInt(seedsSelect.value);
+    }
+    // Read difficulty from UI
+    const difficultySelect = document.getElementById('difficulty') as HTMLSelectElement | null;
+    if (difficultySelect) {
+      this.configuredDifficulty = (difficultySelect.value as DifficultyLevel) || 'normal';
     }
     this.gameState.seeds = [];
     this.gameState.totalSeeds = this.configuredSeeds;
@@ -432,8 +563,22 @@ export class Game {
       }
     }
 
-    // Apply global speed scale to dt so we can tune overall pace
-    const scaledDt = dt * (GLOBAL_SPEED_SCALE ?? 1);
+    // Apply global speed scale + difficulty speed multiplier to dt so we can tune overall pace
+    const diffConfig = getDifficultyConfig(this.configuredDifficulty);
+    const scaledDt = dt * (GLOBAL_SPEED_SCALE ?? 1) * diffConfig.speedMultiplier;
+
+    // Check for level progression
+    const currentLevelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+    if (currentLevelConfig.level !== this.gameState.currentLevel) {
+      this.gameState.currentLevel = currentLevelConfig.level;
+      this.gameState.levelStartScore = this.gameState.score;
+    }
+
+    // Update environmental enemies (snakes, rats)
+    if (this.gameState.running) {
+      this.updateEnvironmentalEnemies(scaledDt);
+    }
+
     // Update all birds
     for (const bird of this.gameState.birds) {
       bird.update(scaledDt, this.W, this.H, this.feederX, this.feederY, this.gameState.birds);
@@ -554,16 +699,39 @@ export class Game {
   }
 
   private render() {
-    // Sky gradient
-    const skyGrad = this.ctx.createLinearGradient(0, 0, 0, this.H * 0.6);
-    skyGrad.addColorStop(0, '#87CEEB');
-    skyGrad.addColorStop(1, '#E0F6FF');
-    this.ctx.fillStyle = skyGrad;
-    this.ctx.fillRect(0, 0, this.W, this.H * 0.6);
+    // Get current level config for background
+    const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
 
-    // Grass
-    this.ctx.fillStyle = '#2d8659';
-    this.ctx.fillRect(0, this.H * 0.6, this.W, this.H * 0.4);
+    // Draw environment using level config colors
+    Renderer.drawEnvironment(this.ctx, this.W, this.H, levelConfig.backgroundColor, levelConfig.grassColor);
+
+    // Draw trees and bushes using deterministic positions based on level
+    const treePositions: [number, number][] = [];
+    const bushPositions: [number, number][] = [];
+    
+    // Generate stable tree/bush positions using level number as seed offset
+    const seed = levelConfig.level * 12345;
+    for (let i = 0; i < levelConfig.treeCount; i++) {
+      const idx = (seed + i * 111) % 1000;
+      const x = (idx % this.W) * 0.9 + this.W * 0.05;
+      const y = this.H * 0.5 + (((idx / 1000) * this.H * 0.15)); // Ground area only
+      treePositions.push([x, y]);
+    }
+    
+    for (let i = 0; i < levelConfig.bushCount; i++) {
+      const idx = (seed + i * 222 + 5000) % 1000;
+      const x = (idx % this.W) * 0.85 + this.W * 0.075;
+      const y = this.H * 0.65 + (((idx / 1000) * this.H * 0.15)); // Ground area only
+      bushPositions.push([x, y]);
+    }
+
+    // Draw trees and bushes in background
+    for (const [x, y] of treePositions) {
+      Renderer.drawTree(this.ctx, x, y, 80);
+    }
+    for (const [x, y] of bushPositions) {
+      Renderer.drawBush(this.ctx, x, y, 50);
+    }
 
     // feeder area background (subtle dirt area)
     this.ctx.fillStyle = 'rgba(139, 90, 43, 0.2)';
@@ -610,6 +778,16 @@ export class Game {
       if (!seed.eaten) this.ctx.fillRect(seed.x - 2, seed.y - 2, 4, 4);
     }
 
+    // Draw environmental enemies (snakes and rats)
+    let frameNum = Math.floor(performance.now() / 50) % 4;
+    for (const creature of this.gameState.environmentalEnemies) {
+      if (creature.type === 'snake') {
+        Renderer.drawSnake(this.ctx, creature.x, creature.y, frameNum, 40);
+      } else if (creature.type === 'rat') {
+        Renderer.drawRat(this.ctx, creature.x, creature.y, frameNum, 30);
+      }
+    }
+
     // Draw birds (scale to original ~3x radius for display size)
     for (const bird of this.gameState.birds) {
       if (bird.alive) {
@@ -635,8 +813,18 @@ export class Game {
       if (gameHUD) gameHUD.style.display = 'flex';
       const birdsEl = document.getElementById('birds');
       const seedsEl = document.getElementById('seedsRemaining');
+      const levelEl = document.getElementById('level');
       if (birdsEl) birdsEl.innerText = 'Birds: ' + this.gameState.birds.filter(b => b.alive).length;
       if (seedsEl) seedsEl.innerText = 'Seeds: ' + this.gameState.seeds.filter(s => !s.eaten).length;
+      if (levelEl) {
+        const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+        const nextThreshold = getNextLevelThreshold(this.gameState.score, this.configuredSeeds);
+        if (nextThreshold !== null) {
+          levelEl.innerText = `Level ${levelConfig.level}: ${levelConfig.description} | Next: ${nextThreshold}`;
+        } else {
+          levelEl.innerText = `Level ${levelConfig.level}: ${levelConfig.description} (Max)`;
+        }
+      }
       this.updateScore();
     } else {
       if (uiPanel) uiPanel.classList.remove('hidden');

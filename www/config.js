@@ -27,3 +27,33 @@ export function getMaxSeedsForType(type) {
 }
 // Global multiplier to scale all movement/acceleration so we can tune overall pace
 export const GLOBAL_SPEED_SCALE = 0.6;
+// Difficulty configurations
+export const DIFFICULTY_CONFIG = {
+    easy: {
+        predatorSpawnMultiplier: 0.5,
+        speedMultiplier: 0.8,
+        initialPredators: 2,
+        description: 'Fewer and slower predators'
+    },
+    normal: {
+        predatorSpawnMultiplier: 1.0,
+        speedMultiplier: 1.0,
+        initialPredators: 4,
+        description: 'Balanced difficulty'
+    },
+    hard: {
+        predatorSpawnMultiplier: 1.5,
+        speedMultiplier: 1.2,
+        initialPredators: 6,
+        description: 'More predators, faster speeds'
+    },
+    nightmare: {
+        predatorSpawnMultiplier: 2.0,
+        speedMultiplier: 1.5,
+        initialPredators: 8,
+        description: 'Swarms of fast predators!'
+    }
+};
+export function getDifficultyConfig(difficulty) {
+    return DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.normal;
+}

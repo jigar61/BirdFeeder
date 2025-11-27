@@ -583,4 +583,215 @@ export class Renderer {
       case 'cat': this.drawCat(ctx, x, y, frame, size); break;
     }
   }
+
+  static drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+    // Trunk
+    ctx.fillStyle = '#654321';
+    ctx.fillRect(x - size*0.15, y, size*0.3, size*0.8);
+    
+    // Tree foliage (multiple circles for natural look)
+    ctx.fillStyle = '#228B22';
+    // Main canopy
+    ctx.beginPath();
+    ctx.arc(x, y - size*0.3, size*0.6, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Sides
+    ctx.beginPath();
+    ctx.arc(x - size*0.35, y - size*0.15, size*0.4, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(x + size*0.35, y - size*0.15, size*0.4, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Darker shading
+    ctx.fillStyle = 'rgba(0, 100, 0, 0.3)';
+    ctx.beginPath();
+    ctx.arc(x + size*0.2, y - size*0.25, size*0.35, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  static drawBush(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+    // Multiple overlapping circles for bushy appearance
+    ctx.fillStyle = '#32CD32';
+    
+    ctx.beginPath();
+    ctx.arc(x, y, size*0.5, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(x - size*0.35, y - size*0.2, size*0.35, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(x + size*0.35, y - size*0.2, size*0.35, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(x - size*0.25, y + size*0.3, size*0.3, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(x + size*0.25, y + size*0.3, size*0.3, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Shadow
+    ctx.fillStyle = 'rgba(0, 100, 0, 0.2)';
+    ctx.beginPath();
+    ctx.arc(x, y + size*0.15, size*0.4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  static drawSnake(ctx: CanvasRenderingContext2D, x: number, y: number, frame: number, size: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Undulating snake body
+    const wiggle = Math.sin((frame + x) * 0.1) * size * 0.2;
+    
+    // Body segments (S-curve)
+    ctx.strokeStyle = '#228B22';
+    ctx.lineWidth = size * 0.3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    ctx.moveTo(-size*0.8, -size*0.1);
+    ctx.quadraticCurveTo(-size*0.4, wiggle, 0, -size*0.1);
+    ctx.quadraticCurveTo(size*0.4, -wiggle, size*0.8, -size*0.1);
+    ctx.stroke();
+    
+    // Highlight
+    ctx.strokeStyle = 'rgba(144, 238, 144, 0.6)';
+    ctx.lineWidth = size * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(-size*0.8, -size*0.15);
+    ctx.quadraticCurveTo(-size*0.4, wiggle - size*0.1, 0, -size*0.15);
+    ctx.quadraticCurveTo(size*0.4, -wiggle - size*0.1, size*0.8, -size*0.15);
+    ctx.stroke();
+    
+    // Head
+    ctx.fillStyle = '#1a6b1a';
+    ctx.beginPath();
+    ctx.ellipse(size*0.8, -size*0.1, size*0.25, size*0.2, 0, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Eyes
+    ctx.fillStyle = '#ffff00';
+    ctx.beginPath();
+    ctx.arc(size*0.9, -size*0.2, size*0.08, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(size*0.9, 0, size*0.08, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Pupils
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(size*0.92, -size*0.2, size*0.04, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(size*0.92, 0, size*0.04, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+
+  static drawRat(ctx: CanvasRenderingContext2D, x: number, y: number, frame: number, size: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Body
+    ctx.fillStyle = '#8B8B8B';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size*0.6, size*0.35, 0, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Tail (curved)
+    ctx.strokeStyle = '#696969';
+    ctx.lineWidth = size * 0.08;
+    ctx.lineCap = 'round';
+    const tailCurve = Math.sin(frame * 0.1) * size * 0.2;
+    ctx.beginPath();
+    ctx.moveTo(size*0.6, 0);
+    ctx.quadraticCurveTo(size*0.9 + tailCurve, size*0.3, size*1.0 + tailCurve, size*0.5);
+    ctx.stroke();
+    
+    // Head
+    ctx.fillStyle = '#A9A9A9';
+    ctx.beginPath();
+    ctx.arc(-size*0.55, 0, size*0.35, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Ears
+    ctx.fillStyle = '#8B8B8B';
+    ctx.beginPath();
+    ctx.arc(-size*0.75, -size*0.3, size*0.15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-size*0.75, size*0.3, size*0.15, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Inner ears
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.arc(-size*0.75, -size*0.3, size*0.07, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-size*0.75, size*0.3, size*0.07, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Eyes
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-size*0.75, -size*0.15, size*0.1, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-size*0.75, size*0.15, size*0.1, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Eye shine
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-size*0.72, -size*0.18, size*0.04, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-size*0.72, size*0.12, size*0.04, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Nose
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.arc(-size*0.85, 0, size*0.08, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Whiskers
+    ctx.strokeStyle = '#696969';
+    ctx.lineWidth = size * 0.05;
+    ctx.lineCap = 'round';
+    for(let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-size*0.8, i*size*0.08);
+      ctx.lineTo(-size*1.1, i*size*0.08);
+      ctx.stroke();
+    }
+    
+    // Front paws
+    ctx.fillStyle = '#696969';
+    ctx.fillRect(-size*0.2, size*0.35, size*0.15, size*0.2);
+    ctx.fillRect(size*0.05, size*0.35, size*0.15, size*0.2);
+    
+    ctx.restore();
+  }
+
+  static drawEnvironment(ctx: CanvasRenderingContext2D, w: number, h: number, backgroundColor: string, grassColor: string) {
+    // Sky/background
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Grass
+    ctx.fillStyle = grassColor;
+    ctx.fillRect(0, h*0.6, w, h*0.4);
+  }
 }
