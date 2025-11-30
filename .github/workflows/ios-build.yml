@@ -54,7 +54,7 @@ jobs:
             -arch arm64 \
             -sdk iphoneos \
             -allowProvisioningUpdates \
-            BUILD_FOR_TESTING=NO
+            archive -archivePath build/App.xcarchive
 
       - name: Create IPA
         run: |
@@ -62,10 +62,12 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa
+            -exportPath build/ipa \
+            -allowProvisioningUpdates
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: birdgame-ios
           path: ios/App/build/ipa/*.ipa
