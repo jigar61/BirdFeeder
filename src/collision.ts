@@ -31,9 +31,28 @@ export class CollisionSystem {
             continue;
           }
 
-          // Seed-eating birds can't eat each other
+          // Seed-eating birds (prey) collision: mutual push-back and evasion bonus
           const seedEaters = ['chickadee', 'dove', 'sparrow', 'squirrel'];
-          if (seedEaters.includes(a.type) && seedEaters.includes(b.type)) {
+          const aIsSeedEater = seedEaters.includes(a.type);
+          const bIsSeedEater = seedEaters.includes(b.type);
+          
+          // Handle prey-vs-prey collisions (includes player if they're prey)
+          if (aIsSeedEater && bIsSeedEater) {
+            // Both birds push each other away equally
+            const angle = Math.atan2(b.y - a.y, b.x - a.x);
+            const pushForce = 0.15; // Increased force so it's noticeable despite steering dampening
+            a.vx -= Math.cos(angle) * pushForce;
+            a.vy -= Math.sin(angle) * pushForce;
+            b.vx += Math.cos(angle) * pushForce;
+            b.vy += Math.sin(angle) * pushForce;
+            
+            // Grant both birds evasion bonus: temporary speed boost for skillful maneuvering
+            const now = performance.now();
+            a.lastEvadedTime = now;
+            b.lastEvadedTime = now;
+            a.evasionBonus = 0.3; // 30% speed boost
+            b.evasionBonus = 0.3;
+            
             continue;
           }
 

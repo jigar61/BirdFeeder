@@ -3,7 +3,8 @@ import { Renderer } from './renderer.js';
 import { CollisionSystem } from './collision.js';
 import { SPECIES_INFO, SPRITE_FRAMES, GLOBAL_SPEED_SCALE, getMaxSeedsForType, getDifficultyConfig } from './config.js';
 import { GameState, Seed, SpeciesType, DifficultyLevel, EnvironmentalCreature } from './types.js';
-import { getLevelConfig, getNextLevelThreshold } from './levels.js';
+import { getLevelConfig, getNextLevelThreshold, getSeedMultiplier, getBirdMultiplier, getLevelConfigByNumber } from './levels.js';
+import { audioManager } from './audio.js';
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -32,6 +33,10 @@ export class Game {
   private configuredBirdType: SpeciesType = 'hawk';
   private gameEndModalShowing: boolean = false;
   private lastNotifiedLevel: number = 0;
+  private selectedLevelNumber: number = 1;
+  private unlockedLevels: number[] = [1]; // Track which levels are unlocked
+  private currentLevelGoal: number = 0; // Score goal for current level
+  private isPaused: boolean = false; // Pause state
 
   constructor(canvasId: string) {
     const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -63,7 +68,97 @@ export class Game {
     this.feederImg.onload = () => { this.assetsLoaded = true; };
     this.feederImg.onerror = () => { this.assetsLoaded = false; };
 
+    // Load unlocked levels from localStorage
+    this.loadUnlockedLevels();
     this.setupEventListeners();
+    this.setupLevelSelectionUI();
+  }
+
+  private loadUnlockedLevels() {
+    const saved = localStorage.getItem('unlockedLevels');
+    if (saved) {
+      try {
+        this.unlockedLevels = JSON.parse(saved);
+      } catch (e) {
+        this.unlockedLevels = [1];
+      }
+    } else {
+      this.unlockedLevels = [1];
+    }
+  }
+
+  private saveUnlockedLevels() {
+    localStorage.setItem('unlockedLevels', JSON.stringify(this.unlockedLevels));
+  }
+
+  private setupLevelSelectionUI() {
+    const levelSelect = document.getElementById('selectedLevel') as HTMLSelectElement | null;
+    if (!levelSelect) return;
+
+    // Update option disabled status based on unlocked levels
+    for (let i = 1; i <= 5; i++) {
+      const option = levelSelect.querySelector(`option[value="${i}"]`) as HTMLOptionElement | null;
+      if (option) {
+        option.disabled = !this.unlockedLevels.includes(i);
+      }
+    }
+
+    // Set default to first level if not already set
+    if (!levelSelect.value) {
+      levelSelect.value = '1';
+    }
+
+    levelSelect.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      this.selectedLevelNumber = parseInt(target.value);
+      this.updateLevelDescription();
+    });
+
+    // Listen for bird and seed changes to update description
+    const speciesSelect = document.getElementById('species') as HTMLSelectElement | null;
+    const seedsSelect = document.getElementById('seeds') as HTMLSelectElement | null;
+
+    if (speciesSelect) {
+      speciesSelect.addEventListener('change', () => {
+        this.updateLevelDescription();
+      });
+    }
+
+    if (seedsSelect) {
+      seedsSelect.addEventListener('change', () => {
+        this.updateLevelDescription();
+      });
+    }
+
+    this.updateLevelDescription();
+  }
+
+  private updateLevelDescription() {
+    const descEl = document.getElementById('levelDescription');
+    if (!descEl) return;
+
+    // Read current selections from UI
+    const seedsSelect = document.getElementById('seeds') as HTMLSelectElement | null;
+    const currentSeeds = seedsSelect ? parseInt(seedsSelect.value) : 100;
+
+    // Base goals at 100 seeds baseline - incrementally harder
+    const BASE_GOALS = [0, 50, 100, 150, 200];
+    const levelConfigs = [
+      { level: 1, desc: 'Start your bird adventure' },
+      { level: 2, desc: 'Reach the goal to unlock' },
+      { level: 3, desc: 'Reach the goal to unlock' },
+      { level: 4, desc: 'Reach the goal to unlock' },
+      { level: 5, desc: 'Reach the goal to unlock' }
+    ];
+
+    const config = levelConfigs.find(c => c.level === this.selectedLevelNumber);
+    if (config && BASE_GOALS[this.selectedLevelNumber] > 0) {
+      const seedScale = currentSeeds / 100;
+      const adjustedScore = Math.floor(BASE_GOALS[this.selectedLevelNumber] * seedScale);
+      descEl.innerText = `${config.desc} (${adjustedScore} pts)`;
+    } else if (config) {
+      descEl.innerText = config.desc;
+    }
   }
 
   private setupEventListeners() {
@@ -159,12 +254,27 @@ export class Game {
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
 
-      // On mobile, move the selected bird (player) directly to the touch point for seamless dragging
+      // On mobile, steer the player bird toward the touch point instead of direct positioning
+      // This allows collision forces to affect movement naturally
       if (this.selectedBird.isPlayer) {
-        this.selectedBird.x = x;
-        this.selectedBird.y = y;
-        this.selectedBird.vx = 0;
-        this.selectedBird.vy = 0;
+        const dx = x - this.selectedBird.x;
+        const dy = y - this.selectedBird.y;
+        const dist = Math.hypot(dx, dy);
+        
+        // Only apply steering if not at touch point
+        if (dist > 10) {
+          // Calculate target velocity toward touch point
+          const targetVx = (dx / dist) * Math.min(dist * 0.05, this.selectedBird.speed * 2);
+          const targetVy = (dy / dist) * Math.min(dist * 0.05, this.selectedBird.speed * 2);
+          
+          // Smooth velocity changes to allow collisions to work
+          this.selectedBird.vx += (targetVx - this.selectedBird.vx) * 0.4;
+          this.selectedBird.vy += (targetVy - this.selectedBird.vy) * 0.4;
+        } else {
+          // Near target point, reduce velocity
+          this.selectedBird.vx *= 0.8;
+          this.selectedBird.vy *= 0.8;
+        }
       } else {
         // For non-player birds, keep the old behavior
         const dx = x - this.selectedBird.x;
@@ -234,6 +344,75 @@ export class Game {
       // On mobile, orientationchange fires before resize, so delay the resize slightly
       setTimeout(() => this.handleResize(), 100);
     });
+
+    // Pause button
+    const pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => this.togglePause());
+    }
+
+    // Settings button
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => this.openSettings());
+    }
+
+    // Pause overlay buttons
+    const resumeBtn = document.getElementById('resumeBtn');
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => this.togglePause());
+    }
+
+    const pauseSettingsBtn = document.getElementById('pauseSettingsBtn');
+    if (pauseSettingsBtn) {
+      pauseSettingsBtn.addEventListener('click', () => this.openSettings());
+    }
+
+    const pauseMenuBtn = document.getElementById('pauseMenuBtn');
+    if (pauseMenuBtn) {
+      pauseMenuBtn.addEventListener('click', () => this.returnToMenu());
+    }
+
+    // Settings modal buttons
+    const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+    if (settingsCloseBtn) {
+      settingsCloseBtn.addEventListener('click', () => this.closeSettings());
+    }
+
+    const audioToggle = document.getElementById('audioToggle') as HTMLInputElement;
+    if (audioToggle) {
+      audioToggle.checked = audioManager.isEnabled();
+      audioToggle.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        audioManager.setEnabled(target.checked);
+      });
+    }
+
+    const volumeSlider = document.getElementById('volumeSlider') as HTMLInputElement;
+    if (volumeSlider) {
+      volumeSlider.value = String(Math.floor(audioManager.getMasterVolume() * 100));
+      volumeSlider.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        const volume = parseInt(target.value) / 100;
+        audioManager.setMasterVolume(volume);
+        const volumeValue = document.getElementById('volumeValue');
+        if (volumeValue) {
+          volumeValue.innerText = `${target.value}%`;
+        }
+      });
+    }
+
+    const difficultySelect = document.getElementById('difficultySelect') as HTMLSelectElement;
+    if (difficultySelect) {
+      difficultySelect.addEventListener('change', (e) => {
+        const target = e.target as HTMLSelectElement;
+        const difficulty = target.value as DifficultyLevel;
+        const diffSelect = document.getElementById('difficulty') as HTMLSelectElement;
+        if (diffSelect) {
+          diffSelect.value = difficulty;
+        }
+      });
+    }
   }
 
   private handleResize() {
@@ -254,22 +433,126 @@ export class Game {
   }
 
   startGame() {
-    this.gameState.running = true;
-    this.spawnInitial();
-    // Ensure player velocity is zero at start
-    const player = this.gameState.birds.find(b => b.isPlayer);
-    if (player) {
-      player.vx = 0;
-      player.vy = 0;
-    }
-    // Always hide the config screen on game start (mobile/tablet/desktop)
-    const uiPanel = document.getElementById('ui');
-    if (uiPanel) uiPanel.classList.add('hidden');
-    this.gameLoop();
+    // Show goal modal before starting
+    this.showGoalModal(() => {
+      this.gameState.running = true;
+      this.spawnInitial();
+      // Ensure player velocity is zero at start
+      const player = this.gameState.birds.find(b => b.isPlayer);
+      if (player) {
+        player.vx = 0;
+        player.vy = 0;
+      }
+      // Always hide the config screen on game start (mobile/tablet/desktop)
+      const uiPanel = document.getElementById('ui');
+      if (uiPanel) uiPanel.classList.add('hidden');
+      
+      // Show game controls (pause/settings buttons)
+      const gameControls = document.getElementById('gameControls');
+      if (gameControls) gameControls.style.display = 'flex';
+      
+      // Initialize audio context on first user interaction (browser autoplay policy)
+      audioManager.initializeContext();
+      
+      this.gameLoop();
+    });
   }
 
   stopGame() {
     this.gameState.running = false;
+  }
+
+  private togglePause() {
+    this.isPaused = !this.isPaused;
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (!pauseOverlay) return;
+
+    if (this.isPaused) {
+      audioManager.playPause();
+      pauseOverlay.classList.remove('hidden');
+    } else {
+      audioManager.playResume();
+      pauseOverlay.classList.add('hidden');
+    }
+  }
+
+  private openSettings() {
+    audioManager.playUIClick();
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+      settingsModal.classList.remove('hidden');
+    }
+  }
+
+  private closeSettings() {
+    audioManager.playUIClick();
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+      settingsModal.classList.add('hidden');
+    }
+  }
+
+  private returnToMenu() {
+    audioManager.playUIClick();
+    this.isPaused = false;
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (pauseOverlay) pauseOverlay.classList.add('hidden');
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) settingsModal.classList.add('hidden');
+    const gameControls = document.getElementById('gameControls');
+    if (gameControls) gameControls.style.display = 'none';
+    this.resetGame(true);
+  }
+
+  private showGoalModal(onStart: () => void) {
+    const modal = document.getElementById('goalModal');
+    if (!modal) return;
+
+    // Calculate goal for selected level - incrementally harder
+    // Base goals per 100 seeds: [0, 50, 100, 150, 200]
+    // Then scale by actual seed count
+    const BASE_GOALS = [0, 50, 100, 150, 200]; // Goals at 100 seeds baseline
+    const baseGoal = BASE_GOALS[this.selectedLevelNumber] || 0;
+    // Scale by seed count (100 seeds = 1.0x, 50 seeds = 0.5x, 200 seeds = 2.0x)
+    const seedScale = this.configuredSeeds / 100;
+    this.currentLevelGoal = Math.floor(baseGoal * seedScale);
+
+    // Get best score for this level from localStorage
+    const bestKey = `bestScore_level${this.selectedLevelNumber}`;
+    const bestScore = parseInt(localStorage.getItem(bestKey) || '0');
+
+    // Update modal content
+    const titleEl = document.getElementById('goalTitle');
+    const messageEl = document.getElementById('goalMessage');
+    const goalEl = document.getElementById('goalScore');
+    const bestEl = document.getElementById('goalBest');
+    const levelConfigs = [
+      { desc: 'Garden Meadow' },
+      { desc: 'Wild Field' },
+      { desc: 'Twilight Forest' },
+      { desc: 'Midnight Wilderness' },
+      { desc: 'Shadow Realm' }
+    ];
+
+    if (titleEl) {
+      const levelIdx = Math.max(0, Math.min(this.selectedLevelNumber - 1, levelConfigs.length - 1));
+      titleEl.innerText = `🎯 Level ${this.selectedLevelNumber}: ${levelConfigs[levelIdx].desc}`;
+    }
+    if (messageEl) messageEl.innerText = `Reach the score target to complete this level and unlock the next.`;
+    if (goalEl) goalEl.innerText = String(this.currentLevelGoal);
+    if (bestEl) bestEl.innerText = String(bestScore);
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Setup button handler
+    const startBtn = document.getElementById('goalStartBtn');
+    if (startBtn) {
+      startBtn.onclick = () => {
+        modal.classList.add('hidden');
+        onStart();
+      };
+    }
   }
 
   private showGameEndModal(title: string, message: string) {
@@ -294,8 +577,8 @@ export class Game {
       if (messageEl) messageEl.innerText = message;
       if (scoreEl) scoreEl.innerText = String(this.gameState.score);
       
-      const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
-      if (levelEl) levelEl.innerText = `${levelConfig.level}: ${levelConfig.description}`;
+      const currentLevelConfig = getLevelConfigByNumber(this.selectedLevelNumber);
+      if (levelEl) levelEl.innerText = `${currentLevelConfig.level}: ${currentLevelConfig.description}`;
       
       const eatenSeeds = this.gameState.seeds.filter(s => s.eaten).length;
       if (seedsEl) seedsEl.innerText = String(eatenSeeds);
@@ -307,6 +590,22 @@ export class Game {
       // Hide config screen to ensure modal is visible
       const uiPanel = document.getElementById('ui');
       if (uiPanel) uiPanel.classList.add('hidden');
+
+      // Check if goal was met and unlock next level
+      const goalMet = this.gameState.score >= this.currentLevelGoal;
+      if (goalMet && this.selectedLevelNumber < 5) {
+        if (!this.unlockedLevels.includes(this.selectedLevelNumber + 1)) {
+          this.unlockedLevels.push(this.selectedLevelNumber + 1);
+          this.saveUnlockedLevels();
+        }
+      }
+
+      // Save best score for this level
+      const bestKey = `bestScore_level${this.selectedLevelNumber}`;
+      const currentBest = parseInt(localStorage.getItem(bestKey) || '0');
+      if (this.gameState.score > currentBest) {
+        localStorage.setItem(bestKey, String(this.gameState.score));
+      }
 
       // Setup button handlers
       const retryBtn = document.getElementById('modalRetryBtn');
@@ -330,6 +629,7 @@ export class Game {
           const btn = document.getElementById('startBtn');
           if (btn) btn.innerText = '🎮 Start Game';
           this.resetGame(true);
+          this.setupLevelSelectionUI(); // Refresh UI with unlocked levels
         };
       }
     }, 50);
@@ -363,7 +663,19 @@ export class Game {
     this.gameState.seeds = [];
     this.gameState.totalSeeds = this.configuredSeeds;
 
-    const diffConfig = getDifficultyConfig(this.configuredDifficulty);
+    let diffConfig = getDifficultyConfig(this.configuredDifficulty);
+    
+    // Increase predator difficulty if player is prey (seed-eating bird)
+    const seedEaters = ['chickadee', 'dove', 'sparrow', 'squirrel'];
+    const isPlayerPrey = seedEaters.includes(this.configuredBirdType);
+    if (isPlayerPrey) {
+      // Boost predator spawn rates and counts for prey path
+      diffConfig = {
+        ...diffConfig,
+        predatorSpawnMultiplier: diffConfig.predatorSpawnMultiplier * 1.3,
+        initialPredators: Math.ceil(diffConfig.initialPredators * 1.3)
+      };
+    }
 
     // Spawn regular birds
     for (let i = 0; i < 8; i++) {
@@ -504,7 +816,8 @@ export class Game {
   }
 
   private updateEnvironmentalEnemies(scaledDt: number) {
-    const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
+    // Use selected level number for environmental spawning
+    const levelConfig = getLevelConfigByNumber(this.selectedLevelNumber);
 
     // Update existing creatures
     for (const creature of this.gameState.environmentalEnemies) {
@@ -615,18 +928,34 @@ export class Game {
     if (speciesSelect) {
       this.configuredBirdType = (speciesSelect.value as SpeciesType) || 'hawk';
     }
+    // Read selected level from UI
+    const levelSelect = document.getElementById('selectedLevel') as HTMLSelectElement | null;
+    if (levelSelect) {
+      this.selectedLevelNumber = parseInt(levelSelect.value) || 1;
+      this.gameState.currentLevel = this.selectedLevelNumber;
+    }
     this.gameState.seeds = [];
     this.gameState.totalSeeds = this.configuredSeeds;
     this.spawnInitial();
     // remove any existing player flag handled by spawnInitial
     if (pause) {
       this.gameState.running = false;
+      // Hide game controls (pause/settings buttons) when returning to menu
+      const gameControls = document.getElementById('gameControls');
+      if (gameControls) gameControls.style.display = 'none';
       const btn = document.getElementById('startBtn');
       if (btn) btn.innerText = 'Start Game';
     }
   }
 
   private gameLoop() {
+    // If paused, just render and continue the loop without updating game state
+    if (this.isPaused) {
+      this.render();
+      requestAnimationFrame(() => this.gameLoop());
+      return;
+    }
+
     const now = performance.now();
     // Match previous timing scale used in the original code so AI and velocities behave the same
     const dt = Math.min((now - this.lastTime) * 0.06, 60);
@@ -802,8 +1131,8 @@ export class Game {
   }
 
   private render() {
-    // Get current level config for background
-    const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
+    // Get current level config based on selected level
+    const levelConfig = getLevelConfigByNumber(this.selectedLevelNumber);
 
     // Draw environment using level config colors
     Renderer.drawEnvironment(this.ctx, this.W, this.H, levelConfig.backgroundColor, levelConfig.grassColor);

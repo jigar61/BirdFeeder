@@ -647,52 +647,59 @@ export class Renderer {
     ctx.save();
     ctx.translate(x, y);
     
-    // Undulating snake body
-    const wiggle = Math.sin((frame + x) * 0.1) * size * 0.2;
+    // Undulating snake body - centered
+    const wiggle = Math.sin((frame + x) * 0.1) * size * 0.25;
     
-    // Body segments (S-curve)
+    // Body segments (S-curve, centered)
     ctx.strokeStyle = '#228B22';
-    ctx.lineWidth = size * 0.3;
+    ctx.lineWidth = size * 0.35;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
     ctx.beginPath();
-    ctx.moveTo(-size*0.8, -size*0.1);
-    ctx.quadraticCurveTo(-size*0.4, wiggle, 0, -size*0.1);
-    ctx.quadraticCurveTo(size*0.4, -wiggle, size*0.8, -size*0.1);
+    ctx.moveTo(-size * 0.6, wiggle * 0.5 - size * 0.1);
+    ctx.quadraticCurveTo(-size * 0.2, wiggle, 0, -size * 0.1);
+    ctx.quadraticCurveTo(size * 0.2, -wiggle, size * 0.6, wiggle * 0.5 - size * 0.1);
     ctx.stroke();
     
-    // Highlight
+    // Highlight (lighter green stripe)
     ctx.strokeStyle = 'rgba(144, 238, 144, 0.6)';
-    ctx.lineWidth = size * 0.1;
+    ctx.lineWidth = size * 0.12;
     ctx.beginPath();
-    ctx.moveTo(-size*0.8, -size*0.15);
-    ctx.quadraticCurveTo(-size*0.4, wiggle - size*0.1, 0, -size*0.15);
-    ctx.quadraticCurveTo(size*0.4, -wiggle - size*0.1, size*0.8, -size*0.15);
+    ctx.moveTo(-size * 0.6, wiggle * 0.5 - size * 0.2);
+    ctx.quadraticCurveTo(-size * 0.2, wiggle - size * 0.1, 0, -size * 0.2);
+    ctx.quadraticCurveTo(size * 0.2, -wiggle - size * 0.1, size * 0.6, wiggle * 0.5 - size * 0.2);
     ctx.stroke();
     
-    // Head
+    // Head (front-facing)
     ctx.fillStyle = '#1a6b1a';
     ctx.beginPath();
-    ctx.ellipse(size*0.8, -size*0.1, size*0.25, size*0.2, 0, 0, Math.PI*2);
+    ctx.ellipse(size * 0.65, wiggle * 0.5 - size * 0.1, size * 0.3, size * 0.25, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Eyes
+    // Mouth (small opening)
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = size * 0.08;
+    ctx.beginPath();
+    ctx.arc(size * 0.75, wiggle * 0.5 - size * 0.1, size * 0.1, 0, Math.PI);
+    ctx.stroke();
+    
+    // Eyes (forward looking)
     ctx.fillStyle = '#ffff00';
     ctx.beginPath();
-    ctx.arc(size*0.9, -size*0.2, size*0.08, 0, Math.PI*2);
+    ctx.arc(size * 0.7, wiggle * 0.5 - size * 0.25, size * 0.1, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(size*0.9, 0, size*0.08, 0, Math.PI*2);
+    ctx.arc(size * 0.7, wiggle * 0.5 + size * 0.05, size * 0.1, 0, Math.PI * 2);
     ctx.fill();
     
     // Pupils
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.arc(size*0.92, -size*0.2, size*0.04, 0, Math.PI*2);
+    ctx.arc(size * 0.73, wiggle * 0.5 - size * 0.25, size * 0.05, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(size*0.92, 0, size*0.04, 0, Math.PI*2);
+    ctx.arc(size * 0.73, wiggle * 0.5 + size * 0.05, size * 0.05, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
@@ -702,85 +709,91 @@ export class Renderer {
     ctx.save();
     ctx.translate(x, y);
     
-    // Body
+    // Body (oval, centered)
     ctx.fillStyle = '#8B8B8B';
     ctx.beginPath();
-    ctx.ellipse(0, 0, size*0.6, size*0.35, 0, 0, Math.PI*2);
+    ctx.ellipse(0, 0, size * 0.5, size * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Tail (curved)
-    ctx.strokeStyle = '#696969';
-    ctx.lineWidth = size * 0.08;
-    ctx.lineCap = 'round';
-    const tailCurve = Math.sin(frame * 0.1) * size * 0.2;
+    // Back/rear (darker)
+    ctx.fillStyle = '#696969';
     ctx.beginPath();
-    ctx.moveTo(size*0.6, 0);
-    ctx.quadraticCurveTo(size*0.9 + tailCurve, size*0.3, size*1.0 + tailCurve, size*0.5);
-    ctx.stroke();
+    ctx.ellipse(size * 0.35, 0, size * 0.25, size * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Head
+    // Head (facing forward)
     ctx.fillStyle = '#A9A9A9';
     ctx.beginPath();
-    ctx.arc(-size*0.55, 0, size*0.35, 0, Math.PI*2);
+    ctx.ellipse(-size * 0.4, 0, size * 0.35, size * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Ears
+    // Ears (sides, pointing up/down)
     ctx.fillStyle = '#8B8B8B';
     ctx.beginPath();
-    ctx.arc(-size*0.75, -size*0.3, size*0.15, 0, Math.PI*2);
+    ctx.arc(-size * 0.5, -size * 0.35, size * 0.15, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-size*0.75, size*0.3, size*0.15, 0, Math.PI*2);
+    ctx.arc(-size * 0.5, size * 0.35, size * 0.15, 0, Math.PI * 2);
     ctx.fill();
     
     // Inner ears
     ctx.fillStyle = '#FFB6C1';
     ctx.beginPath();
-    ctx.arc(-size*0.75, -size*0.3, size*0.07, 0, Math.PI*2);
+    ctx.arc(-size * 0.5, -size * 0.35, size * 0.08, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-size*0.75, size*0.3, size*0.07, 0, Math.PI*2);
+    ctx.arc(-size * 0.5, size * 0.35, size * 0.08, 0, Math.PI * 2);
     ctx.fill();
     
-    // Eyes
+    // Eyes (forward facing)
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.arc(-size*0.75, -size*0.15, size*0.1, 0, Math.PI*2);
+    ctx.arc(-size * 0.45, -size * 0.15, size * 0.1, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-size*0.75, size*0.15, size*0.1, 0, Math.PI*2);
+    ctx.arc(-size * 0.45, size * 0.15, size * 0.1, 0, Math.PI * 2);
     ctx.fill();
     
     // Eye shine
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.arc(-size*0.72, -size*0.18, size*0.04, 0, Math.PI*2);
+    ctx.arc(-size * 0.42, -size * 0.18, size * 0.04, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-size*0.72, size*0.12, size*0.04, 0, Math.PI*2);
+    ctx.arc(-size * 0.42, size * 0.12, size * 0.04, 0, Math.PI * 2);
     ctx.fill();
     
-    // Nose
+    // Nose (center front)
     ctx.fillStyle = '#FFB6C1';
     ctx.beginPath();
-    ctx.arc(-size*0.85, 0, size*0.08, 0, Math.PI*2);
+    ctx.arc(-size * 0.55, 0, size * 0.08, 0, Math.PI * 2);
     ctx.fill();
     
-    // Whiskers
+    // Mouth
     ctx.strokeStyle = '#696969';
     ctx.lineWidth = size * 0.05;
-    ctx.lineCap = 'round';
-    for(let i = -1; i <= 1; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-size*0.8, i*size*0.08);
-      ctx.lineTo(-size*1.1, i*size*0.08);
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.arc(-size * 0.55, 0, size * 0.08, -Math.PI * 0.3, Math.PI * 0.3);
+    ctx.stroke();
     
-    // Front paws
+    // Tail (animated, wagging left/right)
+    ctx.strokeStyle = '#696969';
+    ctx.lineWidth = size * 0.08;
+    ctx.lineCap = 'round';
+    const tailWag = Math.sin(frame * 0.15) * size * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.4, 0);
+    ctx.quadraticCurveTo(size * 0.5 + tailWag, size * 0.2, size * 0.55 + tailWag * 0.8, size * 0.35);
+    ctx.stroke();
+    
+    // Front paws (simple circles)
     ctx.fillStyle = '#696969';
-    ctx.fillRect(-size*0.2, size*0.35, size*0.15, size*0.2);
-    ctx.fillRect(size*0.05, size*0.35, size*0.15, size*0.2);
+    ctx.beginPath();
+    ctx.arc(-size * 0.15, size * 0.35, size * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(size * 0.1, size * 0.35, size * 0.12, 0, Math.PI * 2);
+    ctx.fill();
     
     ctx.restore();
   }

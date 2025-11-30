@@ -34,6 +34,8 @@ export class Bird {
   perchTime: number;
   lastFlightTime: number;
   perchPosition: {x: number, y: number} | null;
+  lastEvadedTime: number;
+  evasionBonus: number;
 
   constructor(x: number, y: number, type: SpeciesType, isPlayer: boolean = false) {
     this.x = x;
@@ -72,6 +74,10 @@ export class Bird {
     this.perchTime = 0;
     this.lastFlightTime = performance.now();
     this.perchPosition = null;
+    
+    // Evasion system: tracks when bird just avoided another bird
+    this.lastEvadedTime = 0; // timestamp of last evasion
+    this.evasionBonus = 0; // current evasion speed multiplier (0-0.3)
   }
 
   update(dt: number, W: number, H: number, feederX: number, feederY: number, allBirds: Bird[]) {
@@ -288,9 +294,24 @@ export class Bird {
     // clamp speed by species base speed (match original behavior)
     const max = this.speed * 3;
     const vlen = Math.hypot(this.vx, this.vy);
-    if (vlen > max) {
-      this.vx = (this.vx / vlen) * max;
-      this.vy = (this.vy / vlen) * max;
+    
+    // Apply evasion bonus: decay over time and cap velocity higher
+    const now = performance.now();
+    if (this.lastEvadedTime > 0) {
+      const timeSinceEvasion = (now - this.lastEvadedTime) / 1000; // seconds
+      if (timeSinceEvasion < 0.5) {
+        // Evasion bonus active for 0.5 seconds after collision
+        this.evasionBonus = Math.max(0, 0.3 * (1 - timeSinceEvasion / 0.5));
+      } else {
+        this.evasionBonus = 0;
+      }
+    }
+    
+    // Cap velocity with evasion bonus applied
+    const maxWithBonus = max * (1 + this.evasionBonus);
+    if (vlen > maxWithBonus) {
+      this.vx = (this.vx / vlen) * maxWithBonus;
+      this.vy = (this.vy / vlen) * maxWithBonus;
     }
 
     this.x += this.vx * dt;

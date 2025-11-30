@@ -18,7 +18,7 @@ export const LEVELS: LevelConfig[] = [
   {
     level: 1,
     minScore: 0,
-    backgroundColor: '#87CEEB', // Light blue sky
+    backgroundColor: '#87CEEB', // Light blue sky - Sunny day
     grassColor: '#90EE90', // Light green grass
     treeCount: 2,
     bushCount: 4,
@@ -31,7 +31,7 @@ export const LEVELS: LevelConfig[] = [
   {
     level: 2,
     minScore: 250,
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#E8F4F8', // Lighter blue - Cloudy morning
     grassColor: '#7BC67B', // Darker green
     treeCount: 4,
     bushCount: 6,
@@ -44,8 +44,8 @@ export const LEVELS: LevelConfig[] = [
   {
     level: 3,
     minScore: 600,
-    backgroundColor: '#FFB6C1', // Pink sunset
-    grassColor: '#6AA86A', // Even darker green
+    backgroundColor: '#FF8C42', // Orange sunset
+    grassColor: '#5A8C4C', // Olive green
     treeCount: 6,
     bushCount: 8,
     snakeSpawnRate: 0.5,
@@ -57,8 +57,8 @@ export const LEVELS: LevelConfig[] = [
   {
     level: 4,
     minScore: 1200,
-    backgroundColor: '#191970', // Midnight blue
-    grassColor: '#2D5016', // Deep forest green
+    backgroundColor: '#1a1a3e', // Deep dark blue - Night time
+    grassColor: '#2D4A2B', // Dark forest green
     treeCount: 8,
     bushCount: 10,
     snakeSpawnRate: 0.6,
@@ -70,8 +70,8 @@ export const LEVELS: LevelConfig[] = [
   {
     level: 5,
     minScore: 2000,
-    backgroundColor: '#4B0082', // Indigo
-    grassColor: '#1a3a1a', // Almost black green
+    backgroundColor: '#0a0a1f', // Almost black - Shadow realm
+    grassColor: '#1a2a1a', // Very dark green
     treeCount: 10,
     bushCount: 12,
     snakeSpawnRate: 0.8,
@@ -121,6 +121,11 @@ export function getLevelConfig(score: number, seedCount: number = 100, birdType:
     }
   }
   return currentLevel;
+}
+
+// Get level config by level number (1-5)
+export function getLevelConfigByNumber(levelNumber: number): LevelConfig {
+  return LEVELS[Math.max(0, Math.min(levelNumber - 1, LEVELS.length - 1))];
 }
 
 export function getNextLevelThreshold(currentScore: number, seedCount: number = 100, birdType: string = 'sparrow'): number | null {

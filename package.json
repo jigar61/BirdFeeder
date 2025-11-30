@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Bird Feed Chase - packaged web game",
   "scripts": {
-    "build": "tsc && copy index.html dist && copy style.css dist && copy manifest.json dist && powershell -Command \"Copy-Item -Recurse assets dist\\assets -Force\"",
+    "build": "tsc && node ./scripts/copy-assets.js",
     "watch": "tsc --watch",
-    "prepare-www": "npm run build && powershell -Command \"$ErrorActionPreference='Stop'; Remove-Item -Recurse -Force www -ErrorAction SilentlyContinue; New-Item -ItemType Directory www | Out-Null; Copy-Item dist\\index.html,dist\\style.css,dist\\manifest.json www\\; Get-ChildItem dist -Filter '*.js' -File | Copy-Item -Destination www\\; Copy-Item -Recurse dist\\assets www\\assets -Force\"",
+    "prepare-www": "npm run build && node ./scripts/prepare-www.js",
     "cap:init": "npx cap init birdgame com.example.birdgame",
     "cap:add-android": "npx cap add android",
     "cap:copy": "npm run prepare-www && npx cap copy",

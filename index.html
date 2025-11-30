@@ -56,6 +56,19 @@
         </select>
         <p class="config-description">How challenging should the game be?</p>
       </div>
+
+      <!-- Level Selection -->
+      <div class="config-card">
+        <div class="config-label">📊 Select Level</div>
+        <select id="selectedLevel" class="config-select">
+          <option value="1">🌱 Level 1: Garden Meadow</option>
+          <option value="2" disabled>🌾 Level 2: Wild Field (Locked)</option>
+          <option value="3" disabled>🌅 Level 3: Twilight Forest (Locked)</option>
+          <option value="4" disabled>🌙 Level 4: Midnight Wilderness (Locked)</option>
+          <option value="5" disabled>🎆 Level 5: Shadow Realm (Locked)</option>
+        </select>
+        <p class="config-description" id="levelDescription">Complete the goal to unlock the next level</p>
+      </div>
     </div>
 
     <!-- Action Buttons -->
@@ -78,6 +91,12 @@
       <span id="birds">🐦 Birds: 0</span>
       <span id="seedsRemaining">🌾 Seeds: 0</span>
     </div>
+  </div>
+
+  <!-- Pause & Settings Buttons -->
+  <div id="gameControls" style="display:none; position:fixed; top:12px; right:12px; z-index:11; display:flex; gap:8px;">
+    <button id="pauseBtn" class="game-control-btn" title="Pause game">⏸️</button>
+    <button id="settingsBtn" class="game-control-btn" title="Settings">⚙️</button>
   </div>
   
   <canvas id="game"></canvas>
@@ -126,6 +145,86 @@
     <div class="level-up-content">
       <h2 id="levelUpTitle">⭐ Level Up!</h2>
       <p id="levelUpDesc">Welcome to Level 2: Wild Field</p>
+    </div>
+  </div>
+
+  <!-- Pre-Game Goal Modal -->
+  <div id="goalModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="goalTitle">🎯 Level Goal</h2>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message" id="goalMessage">Reach the score target to complete this level</div>
+        <div class="goal-stats">
+          <div class="stat-item">
+            <span class="stat-label">Target Score:</span>
+            <span class="stat-value" id="goalScore">250</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Current Best:</span>
+            <span class="stat-value" id="goalBest">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="goalStartBtn" class="modal-btn modal-btn-primary">🚀 Begin Level</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Overlay -->
+  <div id="pauseOverlay" class="pause-overlay hidden">
+    <div class="pause-content">
+      <h2>⏸️ Paused</h2>
+      <button id="resumeBtn" class="modal-btn modal-btn-primary">▶️ Resume</button>
+      <button id="pauseSettingsBtn" class="modal-btn modal-btn-secondary">⚙️ Settings</button>
+      <button id="pauseMenuBtn" class="modal-btn modal-btn-secondary">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Settings</h2>
+      </div>
+      <div class="modal-body settings-body">
+        <!-- Audio Settings -->
+        <div class="settings-section">
+          <h3>🔊 Audio</h3>
+          <div class="setting-item">
+            <label for="audioToggle">
+              <input type="checkbox" id="audioToggle" checked />
+              <span>Sound Effects</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="volumeSlider">Volume:</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" />
+            <span id="volumeValue">50%</span>
+          </div>
+        </div>
+
+        <!-- Game Settings -->
+        <div class="settings-section">
+          <h3>🎮 Game Settings</h3>
+          <div class="setting-item">
+            <label for="difficultySelect">Quick Difficulty:</label>
+            <select id="difficultySelect" class="config-select">
+              <option value="easy">🟢 Easy</option>
+              <option value="normal" selected>🟡 Normal</option>
+              <option value="hard">🔴 Hard</option>
+              <option value="nightmare">💀 Nightmare</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="settingsCloseBtn" class="modal-btn modal-btn-primary">✓ Close</button>
+      </div>
     </div>
   </div>
   

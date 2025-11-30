@@ -35,6 +35,8 @@ export declare class Bird {
         x: number;
         y: number;
     } | null;
+    lastEvadedTime: number;
+    evasionBonus: number;
     constructor(x: number, y: number, type: SpeciesType, isPlayer?: boolean);
     update(dt: number, W: number, H: number, feederX: number, feederY: number, allBirds: Bird[]): void;
     private aiUpdate;

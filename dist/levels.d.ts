@@ -16,4 +16,5 @@ export declare function getSeedMultiplier(seedCount: number): number;
 export declare function getBirdMultiplier(birdType: string): number;
 export declare function getAdjustedLevelThreshold(baseThreshold: number, seedCount: number, birdType?: string): number;
 export declare function getLevelConfig(score: number, seedCount?: number, birdType?: string): LevelConfig;
+export declare function getLevelConfigByNumber(levelNumber: number): LevelConfig;
 export declare function getNextLevelThreshold(currentScore: number, seedCount?: number, birdType?: string): number | null;
