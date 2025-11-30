@@ -1,0 +1,122 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  deploy:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Prepare web assets for Capacitor
+        run: npm run prepare-www
+
+      - name: Setup Capacitor
+        run: |
+          npx cap copy ios
+          npx cap sync ios
+
+      - name: Setup Ruby (for CocoaPods)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          pod install --repo-update
+
+      - name: Setup Apple signing
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+          p12-password: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+
+      - name: Download provisioning profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/bird-app.mobileprovision
+
+      - name: Build iOS app for release
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -arch arm64 \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            -allowProvisioningUpdates \
+            archive -archivePath build/App.xcarchive
+
+      - name: Export IPA
+        env:
+          DEVELOPER_TEAM_ID: ${{ secrets.IOS_DEVELOPER_TEAM_ID }}
+        run: |
+          cd ios/App
+          mkdir -p build/ipa
+          xcodebuild -exportArchive \
+            -archivePath build/App.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ipa \
+            -allowProvisioningUpdates
+
+      - name: Upload to TestFlight
+        env:
+          IOS_API_KEY_BASE64: ${{ secrets.IOS_API_KEY_BASE64 }}
+          IOS_API_KEY_ID: ${{ secrets.IOS_API_KEY_ID }}
+          IOS_API_ISSUER_ID: ${{ secrets.IOS_API_ISSUER_ID }}
+        run: |
+          # Decode API key
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$IOS_API_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$IOS_API_KEY_ID.p8
+          
+          # Upload to TestFlight using xcrun
+          cd ios/App/build/ipa
+          xcrun altool --upload-app \
+            -f *.ipa \
+            -t ios \
+            -u "${{ secrets.APPSTORE_CONNECT_EMAIL }}" \
+            -p "${{ secrets.APPSTORE_CONNECT_PASSWORD }}" \
+            --output-format json
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ios/App/build/ipa/*.ipa
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Successfully deployed to TestFlight!"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ TestFlight deployment failed. Check the logs above."
