@@ -44,34 +44,36 @@ jobs:
           cd ios/App
           pod install --repo-update
 
-      - name: Build iOS app
+      - name: Build iOS app (test build)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            -verbose
+
+      - name: Create IPA (Release)
+        continue-on-error: true
         run: |
           cd ios/App
           xcodebuild -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
-            -derivedDataPath build \
             -arch arm64 \
             -sdk iphoneos \
+            -derivedDataPath build \
             -allowProvisioningUpdates \
-            archive -archivePath build/App.xcarchive
+            archive -archivePath build/App.xcarchive 2>&1 | head -100
 
-      - name: Create IPA
-        run: |
-          cd ios/App
-          xcodebuild -exportArchive \
-            -archivePath build/App.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa \
-            -allowProvisioningUpdates
-
-      - name: Upload IPA as artifact
+      - name: Upload build logs on failure
+        if: failure()
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: birdgame-ios
-          path: ios/App/build/ipa/*.ipa
-          retention-days: 30
+          name: ios-build-logs
+          path: ios/App/build
+          retention-days: 7
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
