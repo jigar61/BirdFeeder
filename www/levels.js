@@ -71,16 +71,29 @@ export const LEVELS = [
 export function getSeedMultiplier(seedCount) {
     return seedCount / 100;
 }
-// Get adjusted level thresholds based on seed count
-export function getAdjustedLevelThreshold(baseThreshold, seedCount) {
-    return Math.floor(baseThreshold * getSeedMultiplier(seedCount));
+// Get bird-specific difficulty multiplier
+// Different birds have different progression speeds
+export function getBirdMultiplier(birdType) {
+    switch (birdType) {
+        case 'hawk': return 1.2; // Hawk: harder (need more points)
+        case 'crow': return 1.2; // Crow: harder (need more points)
+        case 'dove': return 0.9; // Dove: easier (need fewer points)
+        case 'sparrow': return 1.0; // Sparrow: normal
+        case 'chickadee': return 0.8; // Chickadee: easiest (need fewer points)
+        default: return 1.0;
+    }
 }
-export function getLevelConfig(score, seedCount = 100) {
+// Get adjusted level thresholds based on seed count and bird type
+export function getAdjustedLevelThreshold(baseThreshold, seedCount, birdType = 'sparrow') {
+    return Math.floor(baseThreshold * getSeedMultiplier(seedCount) * getBirdMultiplier(birdType));
+}
+export function getLevelConfig(score, seedCount = 100, birdType = 'sparrow') {
     // Find the highest level whose adjusted minScore is <= current score
     let currentLevel = LEVELS[0];
     const multiplier = getSeedMultiplier(seedCount);
+    const birdMult = getBirdMultiplier(birdType);
     for (const level of LEVELS) {
-        const adjustedThreshold = Math.floor(level.minScore * multiplier);
+        const adjustedThreshold = Math.floor(level.minScore * multiplier * birdMult);
         if (score >= adjustedThreshold) {
             currentLevel = level;
         }
@@ -90,10 +103,11 @@ export function getLevelConfig(score, seedCount = 100) {
     }
     return currentLevel;
 }
-export function getNextLevelThreshold(currentScore, seedCount = 100) {
+export function getNextLevelThreshold(currentScore, seedCount = 100, birdType = 'sparrow') {
     const multiplier = getSeedMultiplier(seedCount);
+    const birdMult = getBirdMultiplier(birdType);
     for (const level of LEVELS) {
-        const adjustedThreshold = Math.floor(level.minScore * multiplier);
+        const adjustedThreshold = Math.floor(level.minScore * multiplier * birdMult);
         if (adjustedThreshold > currentScore) {
             return adjustedThreshold;
         }

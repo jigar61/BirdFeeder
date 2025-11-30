@@ -11,43 +11,72 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <div id="ui">
-    <h1>Bird Feed Chase</h1>
-    <div class="controls">
-      <label for="species">Choose your bird:</label>
-      <select id="species">
-        <option value="hawk">Hawk</option>
-        <option value="dove">Dove</option>
-        <option value="sparrow">Sparrow</option>
-        <option value="chickadee">Chickadee</option>
-      </select>
-      <label for="seeds">Seeds:</label>
-      <select id="seeds">
-        <option value="50">50 Seeds</option>
-        <option value="100" selected>100 Seeds</option>
-        <option value="200">200 Seeds</option>
-        <option value="500">500 Seeds</option>
-      </select>
-      <label for="difficulty">Difficulty:</label>
-      <select id="difficulty">
-        <option value="easy">Easy</option>
-        <option value="normal" selected>Normal</option>
-        <option value="hard">Hard</option>
-        <option value="nightmare">Nightmare</option>
-      </select>
-      <button id="startBtn">Start Game</button>
-      <button id="restartBtn">Restart</button>
+  <!-- Game Configuration Screen - Full Page Layout -->
+  <div id="ui" class="config-screen">
+    <!-- Header Section -->
+    <div class="config-header">
+      <h1>🐦 Bird Feed Chase</h1>
+      <p>Collect seeds and survive in the wild</p>
     </div>
-    <p class="hint" id="hint">Use arrow keys or WASD to move your bird.</p>
+
+    <!-- Main Configuration Grid -->
+    <div class="config-grid">
+      <!-- Your Bird Selection -->
+      <div class="config-card">
+        <div class="config-label">👤 Choose Your Bird</div>
+        <select id="species" class="config-select">
+          <option value="hawk">🦅 Hawk - Fast & Fierce</option>
+          <option value="dove">🕊️ Dove - Peaceful & Quick</option>
+          <option value="sparrow">🐦 Sparrow - Small & Agile</option>
+          <option value="chickadee">✨ Chickadee - Tiny & Swift</option>
+        </select>
+        <p class="config-description">Select your character to begin your adventure</p>
+      </div>
+
+      <!-- Seed Count -->
+      <div class="config-card">
+        <div class="config-label">🌾 Seed Goal</div>
+        <select id="seeds" class="config-select">
+          <option value="50">50 Seeds</option>
+          <option value="100" selected>100 Seeds</option>
+          <option value="200">200 Seeds</option>
+          <option value="500">500 Seeds</option>
+        </select>
+        <p class="config-description">How many seeds must you collect?</p>
+      </div>
+
+      <!-- Difficulty -->
+      <div class="config-card">
+        <div class="config-label">⚡ Challenge Level</div>
+        <select id="difficulty" class="config-select">
+          <option value="easy">🟢 Easy - Relaxed & Forgiving</option>
+          <option value="normal" selected>🟡 Normal - Balanced</option>
+          <option value="hard">🔴 Hard - Intense</option>
+          <option value="nightmare">💀 Nightmare - Extreme</option>
+        </select>
+        <p class="config-description">How challenging should the game be?</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="config-actions">
+      <button id="startBtn" class="btn-primary">🎮 Start Game</button>
+      <button id="restartBtn" class="btn-secondary">🔄 Restart</button>
+    </div>
+
+    <!-- Footer Instructions -->
+    <div class="config-footer">
+      <p class="hint">⌨️ Arrow Keys or WASD to Move | 📱 Drag on Mobile</p>
+    </div>
   </div>
   
   <!-- HUD during game (top center) -->
-  <div id="gameHUD" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:6px; font-weight:600; font-size:16px; text-align:center; white-space:nowrap;">
-    <div id="score">Score: 0</div>
-    <div id="level" style="font-size:13px; color:#FFD700; margin-top:3px;">Level 1: Garden Meadow</div>
-    <div style="display:flex; gap:16px; justify-content:center; font-size:14px; margin-top:4px;">
-      <span id="birds">Birds: 0</span>
-      <span id="seedsRemaining">Seeds: 0</span>
+  <div id="gameHUD" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.8); color:white; padding:12px 20px; border-radius:8px; font-weight:600; font-size:16px; text-align:center; backdrop-filter: blur(4px);">
+    <div id="score" style="font-size: 18px; margin-bottom: 6px;">Score: 0</div>
+    <div id="level" style="font-size:13px; color:#FFD700; margin-bottom: 6px;">Level 1: Garden Meadow</div>
+    <div style="display:flex; gap:20px; justify-content:center; font-size:14px;">
+      <span id="birds">🐦 Birds: 0</span>
+      <span id="seedsRemaining">🌾 Seeds: 0</span>
     </div>
   </div>
   
@@ -59,6 +88,45 @@
     <button id="downBtn" class="touchBtn" style="bottom:10px;left:50%;transform:translateX(-50%)">↓</button>
     <button id="leftBtn" class="touchBtn" style="top:50%;left:10px;transform:translateY(-50%)">←</button>
     <button id="rightBtn" class="touchBtn" style="top:50%;right:10px;transform:translateY(-50%)">→</button>
+  </div>
+  
+  <!-- Game End Modal -->
+  <div id="gameEndModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Game Over!</h2>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message" id="modalMessage">You were caught! Game over.</div>
+        <div class="modal-stats">
+          <div class="stat-item">
+            <span class="stat-label">Final Score:</span>
+            <span class="stat-value" id="finalScore">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Level Reached:</span>
+            <span class="stat-value" id="finalLevel">1</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Seeds Collected:</span>
+            <span class="stat-value" id="seedsCollected">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modalRetryBtn" class="modal-btn modal-btn-primary">🔄 Try Again</button>
+        <button id="modalMenuBtn" class="modal-btn modal-btn-secondary">🏠 Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level Up Notification -->
+  <div id="levelUpNotification" class="level-up-notification hidden">
+    <div class="level-up-content">
+      <h2 id="levelUpTitle">⭐ Level Up!</h2>
+      <p id="levelUpDesc">Welcome to Level 2: Wild Field</p>
+    </div>
   </div>
   
   <script type="module" src="index.js"></script>

@@ -4,7 +4,7 @@ export interface SpeciesInfo {
     speed: number;
     aggression: number;
 }
-export type SpeciesType = 'hawk' | 'dove' | 'sparrow' | 'chickadee' | 'crow' | 'squirrel' | 'cat';
+export type SpeciesType = 'hawk' | 'dove' | 'sparrow' | 'chickadee' | 'crow' | 'squirrel' | 'cat' | 'mystery';
 export type DifficultyLevel = 'easy' | 'normal' | 'hard' | 'nightmare';
 export interface DifficultyConfig {
     predatorSpawnMultiplier: number;

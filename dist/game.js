@@ -21,6 +21,9 @@ export class Game {
         this.mouseDownX = 0;
         this.mouseDownY = 0;
         this.configuredDifficulty = 'normal';
+        this.configuredBirdType = 'hawk';
+        this.gameEndModalShowing = false;
+        this.lastNotifiedLevel = 0;
         const canvas = document.getElementById(canvasId);
         if (!canvas)
             throw new Error('Canvas not found');
@@ -232,6 +235,86 @@ export class Game {
     stopGame() {
         this.gameState.running = false;
     }
+    showGameEndModal(title, message) {
+        this.gameEndModalShowing = true;
+        // Use setTimeout to ensure modal shows in next frame after game ends
+        setTimeout(() => {
+            const modal = document.getElementById('gameEndModal');
+            if (!modal) {
+                console.error('Game end modal element not found');
+                return;
+            }
+            // Update modal content
+            const titleEl = document.getElementById('modalTitle');
+            const messageEl = document.getElementById('modalMessage');
+            const scoreEl = document.getElementById('finalScore');
+            const levelEl = document.getElementById('finalLevel');
+            const seedsEl = document.getElementById('seedsCollected');
+            if (titleEl)
+                titleEl.innerText = title;
+            if (messageEl)
+                messageEl.innerText = message;
+            if (scoreEl)
+                scoreEl.innerText = String(this.gameState.score);
+            const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
+            if (levelEl)
+                levelEl.innerText = `${levelConfig.level}: ${levelConfig.description}`;
+            const eatenSeeds = this.gameState.seeds.filter(s => s.eaten).length;
+            if (seedsEl)
+                seedsEl.innerText = String(eatenSeeds);
+            // Show modal
+            modal.classList.remove('hidden');
+            console.log('Game end modal shown');
+            // Hide config screen to ensure modal is visible
+            const uiPanel = document.getElementById('ui');
+            if (uiPanel)
+                uiPanel.classList.add('hidden');
+            // Setup button handlers
+            const retryBtn = document.getElementById('modalRetryBtn');
+            const menuBtn = document.getElementById('modalMenuBtn');
+            if (retryBtn) {
+                retryBtn.onclick = () => {
+                    modal.classList.add('hidden');
+                    this.gameEndModalShowing = false;
+                    this.resetGame(false);
+                    this.startGame();
+                };
+            }
+            if (menuBtn) {
+                menuBtn.onclick = () => {
+                    modal.classList.add('hidden');
+                    this.gameEndModalShowing = false;
+                    const uiPanel = document.getElementById('ui');
+                    if (uiPanel)
+                        uiPanel.classList.remove('hidden');
+                    const btn = document.getElementById('startBtn');
+                    if (btn)
+                        btn.innerText = '🎮 Start Game';
+                    this.resetGame(true);
+                };
+            }
+        }, 50);
+    }
+    showLevelUpNotification(levelConfig) {
+        const notification = document.getElementById('levelUpNotification');
+        if (!notification) {
+            console.warn('Level up notification element not found');
+            return;
+        }
+        const titleEl = document.getElementById('levelUpTitle');
+        const descEl = document.getElementById('levelUpDesc');
+        if (titleEl)
+            titleEl.innerText = `⭐ Level ${levelConfig.level}!`;
+        if (descEl)
+            descEl.innerText = `Welcome to ${levelConfig.description}`;
+        // Show notification - ensure hidden class is removed
+        notification.classList.remove('hidden');
+        console.log(`Level up to ${levelConfig.level}: ${levelConfig.description}`);
+        // Auto-hide after 2.5 seconds
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 2500);
+    }
     spawnInitial() {
         this.gameState.birds = [];
         this.gameState.seeds = [];
@@ -311,6 +394,12 @@ export class Game {
             }
             this.spawnBird('cat', x, y);
         }
+        // Spawn mystery predator in nightmare difficulty only
+        if (this.configuredDifficulty === 'nightmare') {
+            const x = Math.random() * this.W;
+            const y = Math.random() * this.H;
+            this.spawnBird('mystery', x, y);
+        }
         // Spawn player based on user selection (match main.js behavior)
         const speciesSelect = document.getElementById('species');
         const chosen = speciesSelect ? speciesSelect.value : 'hawk';
@@ -334,7 +423,7 @@ export class Game {
         return bird;
     }
     spawnSnake(x, y) {
-        const vx = (Math.random() - 0.5) * 2;
+        const vx = 0.3 + Math.random() * 0.7; // Always move right
         const vy = 0; // Snakes stay on ground, no vertical movement
         const speed = 0.5 + Math.random() * 0.5;
         const snake = {
@@ -351,7 +440,7 @@ export class Game {
         return snake;
     }
     spawnRat(x, y) {
-        const vx = (Math.random() - 0.5) * 3;
+        const vx = 0.5 + Math.random() * 1.5; // Always move right
         const vy = 0; // Rats stay on ground, no vertical movement
         const speed = 1 + Math.random() * 0.8;
         const rat = {
@@ -369,7 +458,7 @@ export class Game {
         return rat;
     }
     updateEnvironmentalEnemies(scaledDt) {
-        const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+        const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
         // Update existing creatures
         for (const creature of this.gameState.environmentalEnemies) {
             if (!creature.alive)
@@ -408,7 +497,7 @@ export class Game {
                             const btn = document.getElementById('startBtn');
                             if (btn)
                                 btn.innerText = 'Start Game';
-                            alert('You were caught by a rat! Score: ' + this.gameState.score);
+                            this.showGameEndModal('🐀 Caught by a Rat!', 'A hungry rat caught you! Your adventure ends here.');
                         }
                     }
                     else if (creature.type === 'snake') {
@@ -418,7 +507,7 @@ export class Game {
                             const btn = document.getElementById('startBtn');
                             if (btn)
                                 btn.innerText = 'Start Game';
-                            alert('You were caught by a snake! Score: ' + this.gameState.score);
+                            this.showGameEndModal('🐍 Caught by a Snake!', 'A sneaky snake slithered your way. Game over!');
                         }
                     }
                 }
@@ -438,7 +527,7 @@ export class Game {
         const ratCount = this.gameState.environmentalEnemies.filter(c => c.type === 'rat' && c.alive).length;
         if (ratCount < levelConfig.maxRats) {
             if (performance.now() - this.lastRatSpawn > 1000 / levelConfig.ratSpawnRate) {
-                const x = -50 + Math.random() * (this.W + 100);
+                const x = -50; // Spawn from left edge so they always move right
                 const y = this.H * 0.65 + Math.random() * (this.H * 0.35 - 50); // Grass area only
                 this.spawnRat(x, y);
                 this.lastRatSpawn = performance.now();
@@ -478,6 +567,11 @@ export class Game {
         const difficultySelect = document.getElementById('difficulty');
         if (difficultySelect) {
             this.configuredDifficulty = difficultySelect.value || 'normal';
+        }
+        // Read bird species from UI
+        const speciesSelect = document.getElementById('species');
+        if (speciesSelect) {
+            this.configuredBirdType = speciesSelect.value || 'hawk';
         }
         this.gameState.seeds = [];
         this.gameState.totalSeeds = this.configuredSeeds;
@@ -552,10 +646,12 @@ export class Game {
         const diffConfig = getDifficultyConfig(this.configuredDifficulty);
         const scaledDt = dt * (GLOBAL_SPEED_SCALE ?? 1) * diffConfig.speedMultiplier;
         // Check for level progression
-        const currentLevelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+        const currentLevelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
         if (currentLevelConfig.level !== this.gameState.currentLevel) {
             this.gameState.currentLevel = currentLevelConfig.level;
             this.gameState.levelStartScore = this.gameState.score;
+            // Show level up notification
+            this.showLevelUpNotification(currentLevelConfig);
         }
         // Update environmental enemies (snakes, rats)
         if (this.gameState.running) {
@@ -677,7 +773,7 @@ export class Game {
             const btn = document.getElementById('startBtn');
             if (btn)
                 btn.innerText = 'Start Game';
-            alert('You were caught! Score: ' + this.gameState.score);
+            this.showGameEndModal('😰 You Were Caught!', 'A predator caught you during your adventure.');
         });
         // Check if all seeds are eaten - end game like original main.js
         const uneatenSeeds = this.gameState.seeds.filter(s => !s.eaten).length;
@@ -686,7 +782,7 @@ export class Game {
             const btn = document.getElementById('startBtn');
             if (btn)
                 btn.innerText = 'Start Game';
-            alert('All seeds are eaten! Game Over! Final Score: ' + this.gameState.score);
+            this.showGameEndModal('🎉 All Seeds Gone!', 'All the seeds have been eaten! The birds had a feast.');
         }
         // Keep crowSpawned flag in sync with whether any live crow exists
         this.gameState.crowSpawned = this.gameState.birds.some(b => b.type === 'crow' && b.alive);
@@ -698,7 +794,7 @@ export class Game {
     }
     render() {
         // Get current level config for background
-        const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
+        const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
         // Draw environment using level config colors
         Renderer.drawEnvironment(this.ctx, this.W, this.H, levelConfig.backgroundColor, levelConfig.grassColor);
         // Draw trees and bushes using deterministic positions based on level
@@ -809,8 +905,8 @@ export class Game {
             if (seedsEl)
                 seedsEl.innerText = 'Seeds: ' + this.gameState.seeds.filter(s => !s.eaten).length;
             if (levelEl) {
-                const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds);
-                const nextThreshold = getNextLevelThreshold(this.gameState.score, this.configuredSeeds);
+                const levelConfig = getLevelConfig(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
+                const nextThreshold = getNextLevelThreshold(this.gameState.score, this.configuredSeeds, this.configuredBirdType);
                 if (nextThreshold !== null) {
                     levelEl.innerText = `Level ${levelConfig.level}: ${levelConfig.description} | Next: ${nextThreshold}`;
                 }
@@ -820,7 +916,8 @@ export class Game {
             }
             this.updateScore();
         }
-        else {
+        else if (!this.gameEndModalShowing) {
+            // Only show config screen if modal is not showing
             if (uiPanel)
                 uiPanel.classList.remove('hidden');
             if (gameHUD)

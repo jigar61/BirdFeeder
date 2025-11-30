@@ -7,7 +7,8 @@ export const SPECIES_INFO: Record<SpeciesType, SpeciesInfo> = {
   chickadee: { color: '#222222', radius: 7, speed: 1.5, aggression: 0.5 },
   crow: { color: '#1a1a1a', radius: 16, speed: 2.0, aggression: 1.0 },
   squirrel: { color: '#8B4513', radius: 12, speed: 1.3, aggression: 0.3 },
-  cat: { color: '#D2691E', radius: 15, speed: 1.7, aggression: 1.2 }
+  cat: { color: '#D2691E', radius: 15, speed: 1.7, aggression: 1.2 },
+  mystery: { color: '#4B0082', radius: 20, speed: 2.5, aggression: 2.0 } // Ultimate predator
 };
 
 export const SPRITE_FRAMES: Record<SpeciesType, number> = {
@@ -17,7 +18,8 @@ export const SPRITE_FRAMES: Record<SpeciesType, number> = {
   chickadee: 4,
   crow: 4,
   squirrel: 2,
-  cat: 3
+  cat: 3,
+  mystery: 4
 };
 
 export function getMaxSeedsForType(type: SpeciesType): number {
@@ -26,6 +28,7 @@ export function getMaxSeedsForType(type: SpeciesType): number {
     case 'dove': return 10;
     case 'sparrow': return 2;
     case 'squirrel': return 1;
+    case 'mystery': return 0; // Mystery predator can't pick up seeds
     default: return 0;
   }
 }

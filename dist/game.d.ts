@@ -22,11 +22,16 @@ export declare class Game {
     private mouseDownX;
     private mouseDownY;
     private configuredDifficulty;
+    private configuredBirdType;
+    private gameEndModalShowing;
+    private lastNotifiedLevel;
     constructor(canvasId: string);
     private setupEventListeners;
     private handleResize;
     startGame(): void;
     stopGame(): void;
+    private showGameEndModal;
+    private showLevelUpNotification;
     private spawnInitial;
     private spawnBird;
     private spawnSnake;
